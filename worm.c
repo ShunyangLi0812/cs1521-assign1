@@ -76,6 +76,7 @@ int main(int argc, char **argv)
 			printf("Blocked!\n");
 			break;
 		}
+		// printf("%d\n",!moveWorm(length) );
 		delay(1);
 	}
 	exit(EXIT_SUCCESS);
@@ -109,7 +110,6 @@ void initWorm(int col, int row, int len)
 {
 	int nsegs;
 	int newCol = col+1;
-
 	wormCol[0] = col; wormRow[0] = row;
 	for (nsegs = 1; nsegs < len; nsegs++) {
 		if (newCol == NCOLS) break;
@@ -130,6 +130,8 @@ int overlaps(int col, int row, int len)
 {
 	for (int i = 0; i < len; i++) {
 		// on top of an existing segment
+
+
 		if (wormCol[i] == col && wormRow[i] == row)
 			return 1;
 	}
@@ -148,17 +150,24 @@ int moveWorm(int len)
 
 	n = 0;
 	for (int dx = -1; dx <= 1; dx++) {
+		// printf("dx: %d\n", dx);
 		for (int dy = -1; dy <= 1; dy++) {
 			col = wormCol[0] + dx;
 			row = wormRow[0] + dy;
+			// printf("dy: %d\n", dy);
+			// printf("row: %d\n", row);
+			// printf("len: %d\n", len);
 			if (onGrid(col,row) && !overlaps(col,row,len)) {
+				// printf("ov: %d\n",onGrid(col,row));
 				possibleCol[n] = col;
 				possibleRow[n] = row;
 				n++;
+
 			}
 		}
 	}
 	if (n == 0) return 0;
+
 	for (int i = len-1; i > 0; i--) {
 		wormRow[i] = wormRow[i-1];
 		wormCol[i] = wormCol[i-1];
@@ -177,11 +186,12 @@ void addWormToGrid(int len)
 	int row, col;
 	row = wormRow[0];
 	col = wormCol[0];
+
 	grid[row][col] = '@';
 	for (int i = 1; i < len; i++) {
 		row = wormRow[i];
 		col = wormCol[i];
-    	grid[row][col] = 'o';	
+    grid[row][col] = 'o';
 	}
 }
 

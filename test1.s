@@ -1,4 +1,4 @@
-	
+
 	.text
 clearGrid:
 	sw	$fp, -4($sp)
@@ -9,31 +9,30 @@ clearGrid:
 	addiu	$sp, $sp, -16
 
 ### TODO: Your code goes here
-    
-    li    $t2, '.'        # t2 = '.'
+
     li    $s0, 0          # row = 0
     li    $s1, 0          # col = 0
-    li    $s3, 1          # int size is 1
-    li    $s4, 40         # NROWS = 40
-    li    $s5, 20         # NCOLS = 20
-    mul   $s6, $s5, $s3   # rowsize = col * intsize
-    
-    
+    li    $t4, 1          # int size is 1
+    li    $t2, 40         # NROWS = 40
+    li    $t7, 20         # NCOLS = 20
+    mul   $t6, $t7, $t4   # rowsize = col * intsize
+
+
 loop1:
-    bge   $s0, $s5, end_loop1
+    bge   $s0, $t7, end_loop1
     li    $s1, 0          # col = 0
 loop2:
-    bge   $s1, $s4, end_loop2
-    
-    mul   $t1, $s0, $s6    # t1 = row * rowsize
-    mul   $t3, $s1, $s3    # t3 = col * intsize
+    bge   $s1, $t2, end_loop2
+
+    mul   $t1, $s0, $t6    # t1 = row * rowsize
+    mul   $t3, $s1, $t4    # t3 = col * intsize
     add   $t1, $t1, $t3    # offset = t1 + t3
-    sb    $t2, grid($t1)   # gird[row][col] = '.'
-    
+    sb    '.', grid($t1)   # gird[row][col] = '.'
+
     addi  $s1, $s1, 1      # col ++
     j     loop2
 end_loop2:
-    
+
     addi  $s0, $s0, 1
     j     loop1
 end_loop1:
@@ -70,31 +69,32 @@ drawGrid:
 
 ### TODO: Your code goes here
 
-    li    $s0, 0          # row = 0
-    li    $s1, 0          # col = 0
-    li    $s3, 1          # int size is 1
-    li    $s4, 40         # NROWS = 40
-    li    $s5, 20         # NCOLS = 20
-    mul   $s6, $s5, $s3   # rowsize = col * intsize
-    
-    
+		li    $s0, 0          # row = 0
+		li    $s1, 0          # col = 0
+		li    $t4, 1          # int size is 1
+		li    $t2, 40         # NROWS = 40
+		li    $t7, 20         # NCOLS = 20
+		mul   $t6, $t7, $t4   # rowsize = col * intsize
+
+
 loop11:
-    bge   $s0, $s5, end_loop11
+    bge   $s0, $t7, end_loop11
     li    $s1, 0          # col = 0
 loop22:
-    bge   $s1, $s4, end_loop22
-    
-    mul   $t1, $s0, $s6    # t1 = row * rowsize
-    mul   $t3, $s1, $s3    # t3 = col * intsize
-    add   $t1, $t1, $t3    # offset = t1 + t3
+		bge   $s1, $t2, end_loop2
+
+		mul   $t1, $s0, $t6    # t1 = row * rowsize
+		mul   $t3, $s1, $t4    # t3 = col * intsize
+		add   $t1, $t1, $t3    # offset = t1 + t3
+
     lb    $a0, grid($t1)   # gird[row][col] = '.'
     li    $v0, 11
     syscall
-    
+
     addi  $s1, $s1, 1      # col ++
     j     loop22
 end_loop22:
-    
+
     li    $a0, '\n'
     li    $v0, 11
     syscall
@@ -108,6 +108,3 @@ end_loop11:
 	la	$sp, 4($fp)
 	lw	$fp, ($fp)
 	jr	$ra
-	
-
-

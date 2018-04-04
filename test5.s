@@ -57,12 +57,14 @@ move_loop2:
   li      $t1, 0                        # tem = 0
   li      $t2, 0                        # a tmp
   add     $t2, $t2, $s3                 # t2 = dx
-  add     $t2, $t2, wormCol($t1)        # t2 = t2 + wormCol($t1) 0
+	lw      $t4, wormCol($t1)
+  add     $t2, $t2, $t4        					# t2 = t2 + wormCol($t1) 0
   move    $s0, $t2                      # col = t2
 
   li      $t2, 0                        # reset t2 = 0
   add     $t2, $t2, $s4                 # t2 = dy
-  add     $t2, $t2, wormRow($t1)        # t2 = t2 + wormRow($t1), t1 = 0
+	lw      $t4, wormCol($t1)
+  add     $t2, $t2, $t4        					# t2 = t2 + wormCol($t1) 0
   move    $s1, $t2                      # rows = t1
 
   move    $a0, $s0                      # jal onGrid
@@ -78,14 +80,18 @@ move_loop2:
 
   #######################
   # not correct
-  bne     $t3, 1, move_loop2            # if t3 == 1
-  beq     $t2, 1, move_loop2            # if t2 != 1
+  bne     $t3, 1, end_loop2            # if t3 == 1
+  bne     $t2, 0, end_loop2            # if t2 == 1
   mul     $t1, $t4, $s7                 # t1 = n * intsize
-  sw      $s0, possibleCol($t1)         # possibleCol($t1) = col
-  sw      $s1, possibleRow($t1)         # possibleRow($t1) = row
+  lw      $s0, possibleCol($t1)         # possibleCol($t1) = col
+  lw      $s1, possibleRow($t1)         # possibleRow($t1) = row
   addi    $s7, $s7, 1                   # n ++
+
   addi    $s4, $s4, 1                   # dy ++
-  j       move_loop2                    # loop2
+  j       move_loop2	                  # loop2
+end_loop2:
+	add     $s4, $s4, 1
+	j       move_loop2
 
 end2:
   addi    $s3, $s3, 1                   # dx ++
@@ -98,26 +104,30 @@ end1:
 
 next:
   add     $t0, $s2, -1              # i = len -1
+move_loop3:
   ble     $t0, 0, end3              # loop
   add     $t1, $t0, -1              # t1 = i - 1
-  mul     $t1, $t1, $t4             # t1 = (i-1) * intsize
+  mul     $t5, $t1, $t4             # t1 = (i-1) * intsize
   mul     $t2, $t0, $t4             # t2 = i * intsize
-  move    $t3, wormRow($t1)         # t3 = wormRow[i - 1]
+  lw      $t3, wormRow($t5)         # t3 = wormRow[i - 1]
   sw      $t3, wormRow($t2)         # wormRow(i)  = t3
 
   add     $t1, $t0, -1              # t1 = i - 1
-  mul     $t1, $t1, $t4             # t1 = (i-1) * intsize
+  mul     $t5, $t1, $t4             # t1 = (i-1) * intsize
   mul     $t2, $t0, $t4             # t2 = i
-  move    $t3, wormCol($t1)         # t3 = wormCol[i-1]
+  lw      $t3, wormCol($t5)         # t3 = wormCol[i-1]
   sw      $t3, wormCol($t2)         # wormCol[i] = t3
+
+	addi    $t0, $t0, -1
+	j       move_loop3
 end3:
   move    $a0, $s7                  # a0 = n
   jal     randValue
   move    $t0, $v0                  # i = randValue(n)
 
   li      $t1, 0                    # t1 = 0
-  move    $t2, possibleRow($t0)     # t2 = possibleRow[i]
-  move    $t3, possibleRow($t0)     # t3 = possibleCol[i]
+  lw      $t2, possibleRow($t0)     # t2 = possibleRow[i]
+  lw      $t3, possibleRow($t0)     # t3 = possibleCol[i]
 
   sw      $t3, wormRow($t1)         # wormRow[0] = t2
   sw      $t2, wormCol($t1)         # wormCol[o] = t3

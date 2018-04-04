@@ -24,29 +24,29 @@ overlaps:
 	addiu	$sp, $sp, -8
 
 ### TODO: Your code goes here
-    
+
     move    $s5, $a0        # s5 = col
     move    $s6, $a1        # s6 = row
     move    $s7, $a2        # s7 = len
-    
+
     li      $t6, 0          # i = 0
     li      $t7, 4
-    
+
 check_loop:
-    
-    bge     $t6, $s7, end_check_loop        # i = 0; i < len, loop
+
+    bge     $t6, $a2, end_check_loop        # i = 0; i < len, loop
     mul     $t7, $t7, $t6
-    beq $s5, wormCol($t7), else             # if wormCol[i] == col continue check, else continue loop
-    beq $s6, wormRow($t7), else             # if wormRow[i] == row, return 1
+    beq $a0, wormCol($t7), else             # if wormCol[i] == col continue check, else continue loop
+    beq $a1, wormRow($t7), else             # if wormRow[i] == row, return 1
     li  $v0, 1
     jr  $ra
-    
+
 else:                                       # if wormCol[i] != col || wormRow[i] != row, continue loop
      addi $t6, $t6,1
      j    check_loop
- 
+
 end_check_loop:
-    
+
     li  $v0, 0
 	# tear down stack frame
 

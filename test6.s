@@ -25,7 +25,6 @@ addWormToGrid:
 	addiu	$sp, $sp, -24
 
 ### TODO: your code goes here
-	move  $s0, $a0
 	li    $t1, 0
 	li    $t2, 1
 	li    $t3, 4
@@ -41,7 +40,7 @@ addWormToGrid:
 	li    $t0, 1
 	li    $t1, 1												# reset t1 = 1
 add_loop:
-	bge   $t0, $s0, end4									# i < len
+	bge   $t0, $a0, end4									# i < len
 
 	mul   $t1, $t1, $t3									# t1 = t1 * intsize
 	lw    $s2, wormRow($t1)							# row = wormRow[i]
@@ -51,7 +50,7 @@ add_loop:
 	mul   $t7, $s3, $t2									# t7 = col * charsize
 	add   $t6, $t6, $t7									# offset = t6 + t7
 	sb    'o',  grid($t6)								# grid[row][col] = o
-	
+
 	# tear down stack frame
 	lw	$s3, -20($fp)
 	lw	$s2, -16($fp)

@@ -43,7 +43,7 @@
 # 	addi	$a0, $0, x
 # 	addiu	$v0, $0, 11
 # 	syscall
-# 
+#
 # print out a word-sized int
 # define putw(x)
 # 	add 	$a0, $0, x
@@ -311,14 +311,39 @@ clearGrid:
 	addiu	$sp, $sp, -16
 
 ### TODO: Your code goes here
-    
+		li    $t0, '.'
+		li    $s0, 0          # row = 0
+		li    $s1, 0          # col = 0
+		li    $t4, 1          # charsize is 1
+		li    $t2, 40         # NCOLS = 40
+		li    $t7, 20         # NROWS = 20
+		mul   $t6, $t2, $t4   # rowsize = col * charsize
+
+loop1:
+		bge   $s0, $t7, end_loop1
+		li    $s1, 0          # col = 0
+loop2:
+		bge   $s1, $t2, end_loop2
+
+		mul   $t1, $s0, $t6    # t1 = row * rowsize
+		mul   $t3, $s1, $t4    # t3 = col * charsize
+		add   $t1, $t1, $t3    # offset = t1 + t3
+		sb    $t0, grid($t1)   # gird[row][col] = '.'
+
+		addi  $s1, $s1, 1      # col ++
+		j     loop2
+end_loop2:
+
+		addi  $s0, $s0, 1
+		j     loop1
+end_loop1:
 	# tear down stack frame
-	lw	$s1, -12($fp)
-	lw	$s0, -8($fp)
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-	jr	$ra
+		lw	$s1, -12($fp)
+		lw	$s0, -8($fp)
+		lw	$ra, -4($fp)
+		la	$sp, 4($fp)
+		lw	$fp, ($fp)
+		jr	$ra
 
     .text
 drawGrid:
@@ -343,13 +368,45 @@ drawGrid:
 
 ### TODO: Your code goes here
 
+		li    $s0, 0          # row = 0
+		li    $s1, 0          # col = 0
+		li    $t4, 1          # charsize 1
+		li    $t2, 40         # NCOLS = 40
+		li    $t0, 20         # NROWS = 20
+		mul   $t6, $t2, $t4   # rowsize = col * charsiz
+
+
+loop11:
+		bge   $s0, $t0, end_loop11
+		li    $s1, 0          # col = 0
+loop22:
+		bge   $s1, $t2, end_loop22
+
+		mul   $t1, $s0, $t6    # t1 = row * rowsize
+		mul   $t3, $s1, $t4    # t3 = col * charsize
+		add   $t1, $t1, $t3    # offset = t1 + t3
+
+		lb    $a0, grid($t1)   # gird[row][col] = '.'
+		li    $v0, 11
+		syscall
+
+		addi  $s1, $s1, 1      # col ++
+		j     loop22
+end_loop22:
+
+		li    $a0, '\n'
+		li    $v0, 11
+		syscall
+		addi  $s0, $s0, 1
+		j     loop11
+end_loop11:
 	# tear down stack frame
-	lw	$s1, -12($fp)
-	lw	$s0, -8($fp)
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-	jr	$ra
+		lw	$s1, -12($fp)
+		lw	$s0, -8($fp)
+		lw	$ra, -4($fp)
+		la	$sp, 4($fp)
+		lw	$fp, ($fp)
+		jr	$ra
 
 
 ####################################
@@ -379,14 +436,45 @@ initWorm:
 	la	$fp, -4($sp)
 	addiu	$sp, $sp, -8
 
-### TODO: Your code goes here
+	### TODO: Your code goes here
+
+  # col -> a0
+  # row -> a1
+  # len -> a2
+  # newCol -> t0
+  # nsegs -> t1
+  # tmp -> t2
+	# newCol ++ mean, plus after
+
+  li    $t1, 1                 # nsegs = 1
+  li    $t2, 0
+  li    $t3, 4                 # intsize 4
+  li    $t4, 40
+
+  add   $t0, $a0, 1          # newCol = col + 1
+
+  sw    $a0, wormCol($t2)      # wormCol[0] = col
+  sw    $a1, wormRow($t2)      # wormRow[0] = row
+
+init_loop:
+  bge   $t1, $a2, end_init
+  beq   $t0, $t4, end_init
+  mul   $t2, $t3, $t1           # find the array position
+  sw    $t0, wormCol($t2)       # wormCol[nsegs] = newCol++
+
+	addi  $t0, $t0, 1             # newCol ++
+  sw    $a1, wormRow($t2)       # wormRow[nsegs] = row
+
+  addi  $t1, $t1, 1
+  j     init_loop
+
+end_init:
 
 	# tear down stack frame
-	lw	$ra, -4($fp)
-	la	$sp, 4($fp)
-	lw	$fp, ($fp)
-	jr	$ra
-
+  lw	$ra, -4($fp)
+  la	$sp, 4($fp)
+  lw	$fp, ($fp)
+  jr	$ra
 
 ####################################
 # ongrid(col,row) ... checks whether (row,col)
@@ -408,11 +496,30 @@ onGrid:
 ### TODO: complete this function
 
 	# set up stack frame
+	sw	$fp, -4($sp)
+	sw	$ra, -8($sp)
+	la	$fp, -4($sp)
+	addiu	$sp, $sp, -8
 
-    # code for function
+	# code for function
+	blt    $a0, 0, endGird
+	bge    $a0, 40, endGird
+	blt    $a1, 0, endGird
+	bge    $a1, 20, endGird
 
+	lw		 $ra, -4($fp)
+	la	   $sp, 4($fp)
+	lw	   $fp, ($fp)
+	li     $v0, 1
+	jr     $ra
+
+endGird:
+	li    $v0, 0
 	# tear down stack frame
-
+	lw	  $ra, -4($fp)
+	la	  $sp, 4($fp)
+	lw	  $fp, ($fp)
+	jr	  $ra
 
 ####################################
 # overlaps(r,c,len) ... checks whether (r,c) holds a body segment
@@ -435,11 +542,59 @@ overlaps:
 ### TODO: complete this function
 
 	# set up stack frame
+	sw	$fp, -4($sp)
+	sw	$ra, -8($sp)
+	sw	$s0, -12($sp)
+	sw	$s1, -16($sp)
+	sw	$s2, -20($sp)
+	sw	$s3, -24($sp)
+	sw	$s4, -28($sp)
+	la	$fp, -4($sp)
+	addiu	$sp, $sp, -28
+	# code for function
+	li    $s0, 4							# intsize 4
+	li    $s6, 0							# i = 0
 
-    # code for function
+for:
+	bge   $s6, $a2, end_over
+	mul   $s2, $s0, $s6
+	lw    $s3, wormCol($s2)
+	lw    $s4, wormRow($s2)
 
+	beq   $a0, $s3, check_again
+	addi  $s6, $s6, 1
+	j     for
+
+check_again:
+	beq   $a1, $s4, else_over
+	# if wormCol[i] == col && wormRow[i] == row, return 1
+	addi  $s6, $s6, 1
+	j     for
+
+else_over:
+
+	lw	$s4, -24($fp)
+	lw	$s3, -20($fp)
+	lw	$s2, -16($fp)
+	lw	$s1, -12($fp)
+	lw	$s0, -8($fp)
+	lw	$ra, -4($fp)
+	la	$sp, 4($fp)
+	lw	$fp, ($fp)
+	li  $v0, 1
+	jr	$ra
+end_over:
 	# tear down stack frame
-
+	lw	$s4, -24($fp)
+	lw	$s3, -20($fp)
+	lw	$s2, -16($fp)
+	lw	$s1, -12($fp)
+	lw	$s0, -8($fp)
+	lw	$ra, -4($fp)
+	la	$sp, 4($fp)
+	lw	$fp, ($fp)
+	li  $v0, 0
+	jr	$ra
 
 ####################################
 # moveWorm() ... work out new location for head
@@ -491,8 +646,94 @@ moveWorm:
 	addiu	$sp, $sp, -40
 
 ### TODO: Your code goes here
+### TODO: Your code goes here
 
-	# tear down stack frame
+	sub   $t0, $s2, 1
+	li    $s7, 0                  # n = 0
+	li    $s3, -1                 # dx = -1
+	li    $t4, 4                  # sizeof(int) = 4
+	move  $s2, $a0                # s2 -> length
+
+
+move_loop1:
+	bgt   $s3, 1, end_move1
+	li    $s4, -1									# dy = -1
+
+move_loop2:
+	bgt   $s4, 1, end_move2
+
+	li    $t5, 0                  # index of arrays
+	lw    $t1, wormCol($t5)       # t1 = wormCol[0]
+	add   $t1, $t1, $s3           # t1 = t1 + dx
+	move  $s0, $t1                # col = t1
+
+	lw    $t1, wormRow($t5)       # t1 = wormRow[0]
+	add   $t1, $t1, $s4           # t1 = t1 + dy
+	move  $s1, $t1                # row = tq
+
+	move  $a0, $s0
+	move  $a1, $s1
+	jal   onGrid                  # onGrid(col, row)
+	move  $t2, $v0                # t2 = onGrid(col, row)
+
+	move  $a0, $s0
+	move  $a1, $s1
+	move  $a2, $s2
+	jal   overlaps
+	move  $t3, $v0                 # t3 = overlaps(col, row, len)
+
+move_if:
+
+	bne   $t2, 1, end_if
+	bne   $t3, 0, end_if
+	mul   $t6, $s7, $t4
+
+	sw    $s0, possibleCol($t6)     # possibleCol[n] = col
+	sw    $s1, possibleRow($t6)     # possibleRow[n] = row
+	addi  $s7, $s7, 1               # n++
+	j     end_if
+end_if:
+	add   $s4, $s4, 1               # dy ++
+	j     move_loop2                # reback to dy loop
+end_move2:
+	add   $s3, $s3, 1               # dx ++
+	j     move_loop1                # reback to dx loop
+end_move1:
+
+	beq   $s7, 0, n_return          # n == 0
+worm_loop:
+	ble   $t0, 0, end_worm          # if i = len - 1; i > 0
+
+	mul   $t3, $t0, $t4             # t3 = i * 4
+	add   $t1, $t0, -1              # t1 = i - 1
+	mul   $t2, $t1, $t4             # t2 = (i - 1) * 4
+	lw    $t5, wormRow($t2)         # t5 = wormRow[i - 1]
+	sw    $t5, wormRow($t3)         # wormRow[i] = t5
+
+	mul   $t3, $t0, $t4             # t3 = i * 4
+	sub   $t1, $t0, 1               # t1 = i - 1
+	mul   $t2, $t1, $t4             # t2 = (i - 1) * 4
+	lw    $t5, wormCol($t2)         # t5 = wormCol[i - 1]
+	sw    $t5, wormCol($t3)         # wormCol[i] = t5
+
+	sub   $t0, $t0, 1               # i --
+	j      worm_loop
+
+end_worm:
+
+	move  $a0, $s7
+	jal   randValue
+	move  $t0, $v0                  # i = randValue(n)
+	mul   $t3, $t0, $t4             # i * 4, array position
+
+	li    $t5, 0                    # the index of array
+	lw    $t6, possibleRow($t3)     # t6 = possibleRow[i]
+	sw    $t6, wormRow($t5)         # wormRow[0] = t6
+
+	mul   $t3, $t0, $t4             # i * 4, array position
+	lw    $t6, possibleCol($t3)     # t6 = possibleCol[i]
+	sw    $t6, wormCol($t5)         # wormCol[0] = t6
+
 	lw	$s7, -36($fp)
 	lw	$s6, -32($fp)
 	lw	$s5, -28($fp)
@@ -504,8 +745,24 @@ moveWorm:
 	lw	$ra, -4($fp)
 	la	$sp, 4($fp)
 	lw	$fp, ($fp)
-
+	li  $v0, 1
 	jr	$ra
+
+n_return:
+	lw	$s7, -36($fp)
+	lw	$s6, -32($fp)
+	lw	$s5, -28($fp)
+	lw	$s4, -24($fp)
+	lw	$s3, -20($fp)
+	lw	$s2, -16($fp)
+	lw	$s1, -12($fp)
+	lw	$s0, -8($fp)
+	lw	$ra, -4($fp)
+	la	$sp, 4($fp)
+	lw	$fp, ($fp)
+	li  $v0, 0
+	jr  $ra
+
 
 ####################################
 # addWormTogrid(N) ... add N worm segments to grid[][] matrix
@@ -537,8 +794,45 @@ addWormToGrid:
 	la	$fp, -4($sp)
 	addiu	$sp, $sp, -24
 
-### TODO: your code goes here
+	### TODO: your code goes here
+	  # len -> a0
+	  # wormCol -> s0
+	  # wormRow -> s1
+	  # i -> t0
+	  # s2 -> '@'
+	  # s3 -> 'o'
+  li    $t1, 0
+  li    $t2, 1            # char size is 1
+  li    $t3, 4            # int size is 4
+  li    $t4, 40           # col is 40
+  li    $s2, 'o'          # s2 = o
+  li    $s3, '@'          # s3 = @
 
+  mul   $t5, $t4, $t2     # rowsize = col * charsize
+  lw    $s0, wormCol($t1) # col = wormCol[0]
+  lw    $s1, wormRow($t1) # row = wormRow[0]
+
+  mul   $t6, $s1, $t5     # t6 = rows * rowsize
+  mul   $t7, $s0, $t2     # t7 = col * charsize
+  add   $t6, $t6, $t7     # offset = t6 + t7
+  sb    $s3, grid($t6)    # grid[row][col] = @
+
+  li    $t0, 1            # i = 1
+add_loop:
+  bge   $t0, $a0, end_add
+  mul   $t1, $t0, $t3          # t1 = i * intsize
+  lw    $s0, wormCol($t1)      # s0 = wormCol[i]
+  lw    $s1, wormRow($t1)      # s1 = wormRow[i]
+
+  mul   $t6, $s1, $t5          # t6 = row * rowsize
+  mul   $t7, $s0, $t2          # t7 = col * charsize
+  add   $t6, $t6, $t7          # offset = t6 + t7
+  sb    $s2, grid($t6)         # grid[row][col] = o
+
+  addi  $t0, $t0, 1            # i ++
+  j     add_loop
+
+end_add:
 	# tear down stack frame
 	lw	$s3, -20($fp)
 	lw	$s2, -16($fp)
@@ -700,7 +994,27 @@ delay:
 	addiu	$sp, $sp, -8
 
 ### TODO: your code goes here
+  li      $t6, 3              # x = 3
+  li      $t0, 0              # i = 0
 
+d_loop1:
+  bge     $t0, $a0, end_d1
+  li      $t1, 0
+d_loop2:
+  bge     $t1, 400, end_d2
+  li      $t2, 0
+d_loop3:
+  bge     $t2, 200, end_d3
+  mul     $t6, $t6, 3
+  add     $t2, $t2, 1
+	j       d_loop3
+end_d3:
+  add     $t1, $t1, 1
+	j       d_loop2
+end_d2:
+  add     $t0, $t0, 1
+	j       d_loop1
+end_d1:
 	# tear down stack frame
 	lw	$ra, -4($fp)
 	la	$sp, 4($fp)
@@ -792,4 +1106,3 @@ rand__post:
 	la	$sp, 4($fp)
 	lw	$fp, ($fp)
 	jr	$ra
-
